@@ -24,6 +24,7 @@ static struct argp_option options[] = {
     {"verbose",  'v', 0,      0,  "Produce verbose output" },
     {"lammpstrj", 'f', "FILE", 0,  "Input lammps trajectory file with columns xu yu zu vx vy vz (default: traj.dump)"},
     {"trr", 'o', "FILE", 0,  "Output trr trajectory file (default: traj.trr)"},
+    {"dt", 'd', "float", 0,  "Timestep in the lammps file, for the trr file (default: 0.001 ps)"},
     { 0 }
 };
 
@@ -32,6 +33,7 @@ struct arguments
     bool verbosity;
     char *infile;
     char *outfile;
+    float dt;
 };
 
 static error_t parse_opt (int key, char *arg, struct argp_state *state)
@@ -50,6 +52,9 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state)
             break;
         case 'o':
             arguments->outfile = arg;
+            break;
+        case 'd':
+            arguments->dt = atof(arg);
             break;
 
         case ARGP_KEY_ARG:
@@ -83,6 +88,7 @@ int main( int argc, char *argv[] )
     arguments.verbosity = false;
     arguments.infile = "traj.dump";
     arguments.outfile = "traj.trr";
+    arguments.dt = 0.001;
 
     // parse command line arguments
     argp_parse(&argp, argc, argv, 0, 0, &arguments);
@@ -91,7 +97,6 @@ int main( int argc, char *argv[] )
     // variables
     int index_xuyuzuvxvyvz[6];
     const char* strings_xuyuzuvxvyvz[] = {"xu", "yu", "zu", "vx", "vy", "vz"};
-    float time = 0.0;
     float lambda = 0.0;
     int natoms = 1;
     int step = 0;
@@ -233,7 +238,7 @@ int main( int argc, char *argv[] )
                 }
 
                 // write to trr trajectory
-                gmx_trr_write_frame(trj_out, step, time, lambda, box, natoms, x, v, NULL);
+                gmx_trr_write_frame(trj_out, step, step * arguments.dt, lambda, box, natoms, x, v, NULL);
             }
         }
         else
