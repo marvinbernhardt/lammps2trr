@@ -198,10 +198,10 @@ int main( int argc, char *argv[] )
                 fgets(line, sizeof(line), fp);
                 sscanf(line, "%f %f", &lammps_box[4], &lammps_box[5]);
 
-                // convert box (orthorombic only)
-                box[0][0] = lammps_box[1] - lammps_box[0];
-                box[1][1] = lammps_box[3] - lammps_box[2];
-                box[2][2] = lammps_box[5] - lammps_box[4];
+                // convert box (orthorombic only) + unit conversion
+                box[0][0] = (lammps_box[1] - lammps_box[0]) / 10;
+                box[1][1] = (lammps_box[3] - lammps_box[2]) / 10;
+                box[2][2] = (lammps_box[5] - lammps_box[4]) / 10;
             }
             else if (strncmp(line, "ITEM: ATOMS", 11) == 0)
             {
