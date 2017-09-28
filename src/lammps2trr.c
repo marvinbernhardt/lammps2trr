@@ -15,8 +15,9 @@ const char* argp_program_bug_address = "<bernhardt@cpc.tu-darmstadt.de>";
 static char doc[] = "\
 lammps2trr -- convert lammps dump with velocities to trr file\n\
 \n\
-Does assume orthorombic box\n\
-Does assume 'real' lammps units e.g. Angstrom and Angstrom/fs and converts them to gromacs units e.g. nm and nm/ps\n";
+Does assume orthorombic box!\n\
+Puts step as time in trr file!\n\
+Does assume 'real' lammps units e.g. Angstrom and Angstrom/fs and converts them to gromacs units e.g. nm and nm/ps!\n";
 static char args_doc[] = "";
 
 static struct argp_option options[] = {
