@@ -10,13 +10,12 @@
 #include "verbPrintf.c"
 
 // CLI stuff
-const char* argp_program_version = "lammpsxv2trr";
+const char* argp_program_version = "lammps2trr";
 const char* argp_program_bug_address = "<bernhardt@cpc.tu-darmstadt.de>";
 static char doc[] = "\
-lammpsxv2trr -- convert lammps dump with velocities to trr file\n\
+lammps2trr -- convert lammps dump with velocities to trr file\n\
 \n\
 Does assume orthorombic box\n\
-Does assume constant box size and position\n\
 Does assume 'real' lammps units e.g. Angstrom and Angstrom/fs and converts them to gromacs units e.g. nm and nm/ps\n";
 static char args_doc[] = "";
 
@@ -103,13 +102,16 @@ int main( int argc, char *argv[] )
     // open lammps input file
     verbPrintf(verbosity, "opening file %s\n", arguments.infile);
     FILE* fp = fopen(arguments.infile, "r");
-    if (fp == NULL) printf("Error in file opening\n");
+    if (fp == NULL)
+    {
+        perror("Opening lammps file for reading: ");
+        return 1;
+    }
 
     // parse first frame of lammps dump for natoms and position (column index) of xu..vz
     verbPrintf(verbosity, "read first frame from lammps file\n");
     char line[256];
     bool got_natoms = false;
-    bool got_box = false;
     bool got_coordpos = false;
     while (fgets(line, sizeof(line), fp))
     {
@@ -124,19 +126,6 @@ int main( int argc, char *argv[] )
                 x = malloc(3 * natoms * sizeof(real));
                 v = malloc(3 * natoms * sizeof(real));
                 got_natoms = true;
-            }
-            else if (strncmp(line, "ITEM: BOX BOUNDS pp pp pp", 25) == 0)
-            {
-                fgets(line, sizeof(line), fp);
-                sscanf(line, "%f %f", &lammps_box[0], &lammps_box[1]);
-
-                fgets(line, sizeof(line), fp);
-                sscanf(line, "%f %f", &lammps_box[2], &lammps_box[3]);
-
-                fgets(line, sizeof(line), fp);
-                sscanf(line, "%f %f", &lammps_box[4], &lammps_box[5]);
-
-                got_box = true;
             }
             else if (strncmp(line, "ITEM: ATOMS", 11) == 0)
             {
@@ -166,16 +155,11 @@ int main( int argc, char *argv[] )
             }
         }
 
-        if (got_natoms && got_coordpos && got_box) break;
+        if (got_natoms && got_coordpos) break;
     }
 
     // go back to file start
     rewind(fp);
-
-    // convert box (orthorombic only)
-    box[0][0] = lammps_box[1] - lammps_box[0];
-    box[1][1] = lammps_box[3] - lammps_box[2];
-    box[2][2] = lammps_box[5] - lammps_box[4];
 
     // open trr output file
     verbPrintf(verbosity, "starting writing file %s\n", arguments.outfile);
@@ -199,10 +183,19 @@ int main( int argc, char *argv[] )
             }
             else if (strncmp(line, "ITEM: BOX BOUNDS pp pp pp", 25) == 0)
             {
-                // box already parsed in first frame
                 fgets(line, sizeof(line), fp);
+                sscanf(line, "%f %f", &lammps_box[0], &lammps_box[1]);
+
                 fgets(line, sizeof(line), fp);
+                sscanf(line, "%f %f", &lammps_box[2], &lammps_box[3]);
+
                 fgets(line, sizeof(line), fp);
+                sscanf(line, "%f %f", &lammps_box[4], &lammps_box[5]);
+
+                // convert box (orthorombic only)
+                box[0][0] = lammps_box[1] - lammps_box[0];
+                box[1][1] = lammps_box[3] - lammps_box[2];
+                box[2][2] = lammps_box[5] - lammps_box[4];
             }
             else if (strncmp(line, "ITEM: ATOMS", 11) == 0)
             {
