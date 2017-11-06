@@ -99,7 +99,7 @@ int main( int argc, char *argv[] )
     const char* strings_xuyuzuvxvyvz[] = {"xu", "yu", "zu", "vx", "vy", "vz"};
     float lambda = 0.0;
     int natoms = 1;
-    int step = 0;
+    int step;
     rvec* x = malloc(3 * natoms * sizeof(real));
     rvec* v = malloc(3 * natoms * sizeof(real));
     float lammps_box[6] = {0, 0, 0, 0, 0, 0}; // xmin, xmax, ymin, ...
@@ -111,6 +111,8 @@ int main( int argc, char *argv[] )
     if (fp == NULL)
     {
         perror("Opening lammps file for reading: ");
+        free(x);
+        free(v);
         return 1;
     }
 
@@ -250,11 +252,9 @@ int main( int argc, char *argv[] )
     }
     fclose(fp);
 
-
-
-
-
     gmx_trr_close(trj_out);
+    free(x);
+    free(v);
 
     return 0;
 }
